@@ -16,6 +16,7 @@ from build_docs import (
     DOC_STRUCTURE,
     GITHUB_REPOS,
     LATEST_VERSION,
+    LOCAL_REGS_VERSIONS,
     PLANTUML_JAR,
     PLANTUML_URL,
     SUMMARY_ENTRY_PATTERN,
@@ -32,6 +33,7 @@ from doc_builder.diff_generation import VERSION_PAIRS, generate_all_version_diff
 from doc_builder.markdown_processing import (
     find_include_refs,
     process_document,
+    rewrite_register_links,
 )
 from doc_builder.ocp_convert import load_bibliography
 
@@ -915,6 +917,15 @@ def build_version(
         (tools_dir / "dpe_cert_visualizer.md").write_text(
             generate_dpe_cert_visualizer_page()
         )
+
+        # 4d. Point register links at site-local copies (2.1 only)
+        if version in LOCAL_REGS_VERSIONS:
+            for md_file in src_dir.rglob("*.md"):
+                content = md_file.read_text()
+                rewritten = rewrite_register_links(content, version)
+                if rewritten != content:
+                    md_file.write_text(rewritten)
+                    logger.debug(f"    Rewrote register links: {md_file.name}")
 
         # 5. Generate book.toml
         book_toml = generate_book_toml(version)

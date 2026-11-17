@@ -64,6 +64,15 @@ jobs:
       - name: Copy docs into dist
         run: cp -r book/* dist/docs/
 
+      - name: Install register generator dependencies
+        run: pip install -r tools/requirements-build_regs.txt
+
+      - name: Build register docs
+        run: python tools/build_regs.py --output regs-build --verbose
+
+      - name: Copy register docs into dist
+        run: cp -r regs-build/regs dist/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

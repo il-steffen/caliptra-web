@@ -48,6 +48,13 @@ from typing import Optional
 VERSIONS = ["1.0", "1.1", "1.2", "1.3", "2.0", "2.1"]
 LATEST_VERSION = "2.1"
 
+# Site base path; must match `base` in astro.config.mjs
+SITE_BASE = "/caliptra-web"
+
+# Versions whose register links point to the site-local copies built by
+# tools/build_regs.py instead of the upstream main-branch register pages
+LOCAL_REGS_VERSIONS = {"2.1"}
+
 # PlantUML configuration
 PLANTUML_VERSION = "1.2025.0"
 PLANTUML_JAR = f"plantuml-asl-{PLANTUML_VERSION}.jar"

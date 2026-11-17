@@ -1,6 +1,7 @@
 # build output
 dist/
 book/
+regs-build/
 .cache/
 # generated types
 .astro/

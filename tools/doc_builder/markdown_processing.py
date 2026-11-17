@@ -12,6 +12,7 @@ from build_docs import (
     IMAGE_PATTERN,
     INCLUDE_PATTERN,
     LINK_PATTERN,
+    SITE_BASE,
     SPHINX_DOC_PATTERN,
     SPHINX_INCLUDE_PATTERN,
 )
@@ -298,6 +299,25 @@ def normalize_markdown_tables(content: str) -> str:
         flush_table()
 
     return "\n".join(result)
+
+
+UPSTREAM_REGS_LINK_PATTERN = re.compile(
+    r"https://chipsalliance\.github\.io/(caliptra-rtl|caliptra-ss)/main/"
+)
+
+
+def rewrite_register_links(content: str, version: str) -> str:
+    """
+    Point upstream main-branch register links at the site-local version copy.
+
+    https://chipsalliance.github.io/caliptra-rtl/main/<path> ->
+    {SITE_BASE}/regs/caliptra-rtl/<version>/<path>
+
+    Query strings and path suffixes are preserved.
+    """
+    return UPSTREAM_REGS_LINK_PATTERN.sub(
+        lambda m: f"{SITE_BASE}/regs/{m.group(1)}/{version}/", content
+    )
 
 
 def rewrite_external_md_links(
