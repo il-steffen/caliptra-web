@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import logging
 import shutil
@@ -19,6 +20,7 @@ from build_docs import (
     LOCAL_REGS_VERSIONS,
     PLANTUML_JAR,
     PLANTUML_URL,
+    SITE_BASE,
     SUMMARY_ENTRY_PATTERN,
     DocEntry,
     FetchError,
@@ -538,6 +540,48 @@ use-hierarchical-titles = true
 """
 
 
+def _short_ref(ref: str) -> str:
+    """Shorten full commit SHAs for display; leave tags and branches as-is."""
+    if len(ref) == 40 and all(c in "0123456789abcdef" for c in ref.lower()):
+        return ref[:7]
+    return ref
+
+
+def _render_repo_versions(version: str) -> str:
+    """Render a Repository versions disclosure for a version, or '' if it has no notes."""
+    data = json.loads(CALIPTRA_DOCS_JSON_PATH.read_text())
+    rows = []
+    for repo_key, repo_info in data.get("repositories", {}).items():
+        ref = repo_info.get("versions", {}).get(version)
+        if not ref:
+            continue
+        github = repo_info["github"]
+        note = repo_info.get("notes", {}).get(version, "")
+        rows.append(
+            f"""                <tr>
+                    <td><a href="https://github.com/{html.escape(github)}">{html.escape(repo_key)}</a></td>
+                    <td><a href="https://github.com/{html.escape(github)}/tree/{html.escape(ref)}"><code>{html.escape(_short_ref(ref))}</code></a></td>
+                    <td>{html.escape(note)}</td>
+                </tr>
+"""
+        )
+
+    if not any(repo_info.get("notes", {}).get(version) for repo_info in data.get("repositories", {}).values()):
+        return ""
+
+    return f"""    <details class="repo-versions">
+        <summary>Caliptra {version} repository versions</summary>
+        <table>
+            <thead>
+                <tr><th>Repository</th><th>Ref</th><th>Note</th></tr>
+            </thead>
+            <tbody>
+{"".join(rows)}            </tbody>
+        </table>
+    </details>
+"""
+
+
 def generate_version_index(versions: list[str], output_dir: Path) -> None:
     """Generate index.html linking to all version builds and diffs."""
     # Check which version pairs have diffs available
@@ -602,6 +646,12 @@ def generate_version_index(versions: list[str], output_dir: Path) -> None:
             border-color: #0969da;
         }
         .diff-icon { margin-right: 8px; }
+        details.repo-versions { margin: 12px 0; }
+        details.repo-versions summary { cursor: pointer; color: #0969da; }
+        details.repo-versions table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 0.9em; background: #fff; }
+        details.repo-versions th, details.repo-versions td { border: 1px solid #e0e0e0; padding: 6px 10px; text-align: left; vertical-align: top; }
+        details.repo-versions th { background: #f5f5f5; color: #333; }
+        details.repo-versions td a { color: #0969da; }
     </style>
 </head>
 <body>
@@ -628,6 +678,17 @@ def generate_version_index(versions: list[str], output_dir: Path) -> None:
 
     html += """    </ul>
 """
+
+    repo_sections = [
+        _render_repo_versions(v) for v in sorted_versions
+    ]
+    repo_sections = [section for section in repo_sections if section]
+    if repo_sections:
+        html += """
+    <h2>Repository versions</h2>
+    <p>Source references used to build each version:</p>
+"""
+        html += "".join(repo_sections)
 
     # Add diff section if any diffs exist
     if diff_links:
@@ -940,7 +1001,10 @@ def build_version(
         # Copy index.hbs to theme folder (mdbook uses this as template)
         index_hbs = theme_src / "index.hbs"
         if index_hbs.exists():
-            shutil.copy(index_hbs, theme_dst / "index.hbs")
+            theme_html = index_hbs.read_text().replace(
+                "__PORTAL_URL__", f"{SITE_BASE}/docs/"
+            )
+            (theme_dst / "index.hbs").write_text(theme_html)
             logger.debug("    Copied index.hbs")
         # Copy JS and CSS to build root (for additional-js/additional-css)
         for asset_file in ["pagetoc.js", "pagetoc.css"]:

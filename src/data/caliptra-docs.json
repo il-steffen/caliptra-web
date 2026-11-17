@@ -10,6 +10,9 @@
         "1.3": "main",
         "2.0": "main",
         "2.1": "main"
+      },
+      "notes": {
+        "2.1": "No release tags; the specification repo tracks all versions on main."
       }
     },
     "caliptra-rtl": {
@@ -22,6 +25,9 @@
         "1.3": "v1.1",
         "2.0": "v2.0.3",
         "2.1": "v2.1.2"
+      },
+      "notes": {
+        "2.1": "Latest Caliptra Core RTL 2.1 release tag."
       }
     },
     "caliptra-ss": {
@@ -30,6 +36,9 @@
         "default": "main",
         "2.0": "css-v2.0.1",
         "2.1": "css-v2.1.2"
+      },
+      "notes": {
+        "2.1": "Latest Subsystem 2.1 release tag; doc refresh tag css-v2.1.2+1.val.doc (same RTL, updated integration spec) under consideration."
       }
     },
     "caliptra-sw": {
@@ -42,6 +51,9 @@
         "1.3": "caliptra-1.x",
         "2.0": "caliptra-2.0",
         "2.1": "fw-2.1.5"
+      },
+      "notes": {
+        "2.1": "Latest 2.1 runtime firmware release (2026-11-10); ROM/FMC docs from the same tree (latest ROM release rom-2.1.3)."
       }
     },
     "caliptra-mcu-sw": {
@@ -50,6 +62,9 @@
         "default": "main",
         "2.0": "main",
         "2.1": "rt-sdk-2.1.1"
+      },
+      "notes": {
+        "2.1": "Runtime SDK 2.1.1 release tag; RT SDK 2.1.2 (tag rom-sdk-2.1.1, 2026-11-17) not yet adopted."
       }
     },
     "caliptra-dpe": {
@@ -64,6 +79,9 @@
         "default": "v1p5",
         "2.0": "v1p4-patches",
         "2.1": "v1p5"
+      },
+      "notes": {
+        "2.1": "Upstream branch, unchanged; caliptra-ss css-v2.1.2 references commit db4a6f3."
       }
     },
     "adams-bridge": {
@@ -72,6 +90,9 @@
         "default": "main",
         "2.0": "v1.0.3",
         "2.1": "b77e3d899e828d626cfc2a0d26a6b5704cc121e0"
+      },
+      "notes": {
+        "2.1": "No 2.1 tag; submodule commit referenced by caliptra-rtl v2.1.2."
       }
     },
     "veer-el2": {
