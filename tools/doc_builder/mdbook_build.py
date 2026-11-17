@@ -547,6 +547,13 @@ def _short_ref(ref: str) -> str:
     return ref
 
 
+REG_PAGE_LINKS = [
+    ("caliptra-rtl external regs (caliptra_top_reg)", "caliptra-rtl/{v}/external-regs/"),
+    ("caliptra-rtl internal regs (caliptra_reg)", "caliptra-rtl/{v}/internal-regs/"),
+    ("caliptra-ss external regs (soc_address_map)", "caliptra-ss/{v}/regs/"),
+]
+
+
 def _render_repo_versions(version: str) -> str:
     """Render a Repository versions disclosure for a version, or '' if it has no notes."""
     data = json.loads(CALIPTRA_DOCS_JSON_PATH.read_text())
@@ -569,17 +576,26 @@ def _render_repo_versions(version: str) -> str:
     if not any(repo_info.get("notes", {}).get(version) for repo_info in data.get("repositories", {}).values()):
         return ""
 
-    return f"""    <details class="repo-versions">
-        <summary>Caliptra {version} repository versions</summary>
-        <table>
-            <thead>
-                <tr><th>Repository</th><th>Ref</th><th>Note</th></tr>
-            </thead>
-            <tbody>
-{"".join(rows)}            </tbody>
-        </table>
-    </details>
-"""
+    return f"""<details class="repo-versions">
+                <summary>Repository versions</summary>
+                <table>
+                    <thead>
+                        <tr><th>Repository</th><th>Ref</th><th>Note</th></tr>
+                    </thead>
+                    <tbody>
+{"".join(rows)}                    </tbody>
+                </table>
+            </details>"""
+
+
+def _render_reg_links(version: str) -> str:
+    """Render links to site-local register pages for versions with local builds."""
+    if version not in LOCAL_REGS_VERSIONS:
+        return ""
+    return "<br>\n                ".join(
+        f'<a href="{SITE_BASE}/regs/{path.format(v=version)}">{html.escape(label)}</a>'
+        for label, path in REG_PAGE_LINKS
+    )
 
 
 def generate_version_index(versions: list[str], output_dir: Path) -> None:
@@ -592,7 +608,7 @@ def generate_version_index(versions: list[str], output_dir: Path) -> None:
             if diff_index.exists():
                 diff_links[new_ver] = (old_ver, f"./{new_ver}/diffs/index.html")
 
-    html = """<!DOCTYPE html>
+    page = """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -600,55 +616,26 @@ def generate_version_index(versions: list[str], output_dir: Path) -> None:
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 50px auto;
             padding: 20px;
             background: #fafafa;
+            color: #333;
         }
         h1 { color: #333; }
-        h2 { color: #555; margin-top: 40px; }
         p { color: #666; }
-        .version-list { list-style: none; padding: 0; }
-        .version-list li { margin: 10px 0; }
-        .version-list a {
-            display: block;
-            padding: 15px 20px;
-            background: #fff;
-            text-decoration: none;
-            color: #333;
-            border-radius: 5px;
-            border: 1px solid #e0e0e0;
-            transition: all 0.2s;
-        }
-        .version-list a:hover {
-            background: #f0f0f0;
-            border-color: #ccc;
-        }
-        .latest {
-            border-left: 4px solid #4CAF50 !important;
-        }
-        .version-num { font-weight: bold; }
-        .version-label { color: #888; font-size: 0.9em; }
-        .diff-list { list-style: none; padding: 0; }
-        .diff-list li { margin: 8px 0; }
-        .diff-list a {
-            display: inline-block;
-            padding: 10px 15px;
-            background: #fff;
-            text-decoration: none;
-            color: #0969da;
-            border-radius: 5px;
-            border: 1px solid #e0e0e0;
-            transition: all 0.2s;
-        }
-        .diff-list a:hover {
-            background: #f0f8ff;
-            border-color: #0969da;
-        }
-        .diff-icon { margin-right: 8px; }
-        details.repo-versions { margin: 12px 0; }
-        details.repo-versions summary { cursor: pointer; color: #0969da; }
-        details.repo-versions table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 0.9em; background: #fff; }
+        .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #e0e0e0; border-radius: 5px; }
+        table.versions { border-collapse: collapse; width: 100%; font-size: 0.95em; }
+        table.versions th, table.versions td { border-bottom: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: top; }
+        table.versions th { background: #f5f5f5; color: #333; white-space: nowrap; }
+        table.versions tr:last-child td { border-bottom: none; }
+        table.versions td a { color: #0969da; text-decoration: none; }
+        table.versions td a:hover { text-decoration: underline; }
+        table.versions td.empty { color: #aaa; }
+        .version-num { font-weight: bold; white-space: nowrap; }
+        .latest-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; font-size: 0.75em; color: #fff; background: #4CAF50; border-radius: 10px; vertical-align: middle; }
+        details.repo-versions summary { cursor: pointer; color: #0969da; white-space: nowrap; }
+        details.repo-versions table { border-collapse: collapse; margin-top: 8px; font-size: 0.9em; background: #fff; min-width: 28rem; }
         details.repo-versions th, details.repo-versions td { border: 1px solid #e0e0e0; padding: 6px 10px; text-align: left; vertical-align: top; }
         details.repo-versions th { background: #f5f5f5; color: #333; }
         details.repo-versions td a { color: #0969da; }
@@ -657,66 +644,53 @@ def generate_version_index(versions: list[str], output_dir: Path) -> None:
 <body>
     <h1>Caliptra Documentation</h1>
     <p>Select a documentation version:</p>
-    <ul class="version-list">
+    <div class="table-wrap">
+    <table class="versions">
+        <thead>
+            <tr>
+                <th>Version</th>
+                <th>Documentation</th>
+                <th>Repository versions</th>
+                <th>Register pages</th>
+                <th>Changes</th>
+            </tr>
+        </thead>
+        <tbody>
 """
 
     sorted_versions = sorted(
         versions, key=lambda v: [int(x) for x in v.split(".")], reverse=True
     )
 
-    for i, version in enumerate(sorted_versions):
+    for version in sorted_versions:
         is_latest = version == LATEST_VERSION
-        latest_class = ' class="latest"' if is_latest else ""
-        label = " (Latest)" if is_latest else ""
-        html += f"""        <li>
-            <a href="./{version}/index.html"{latest_class}>
-                <span class="version-num">Caliptra {version}</span>
-                <span class="version-label">{label}</span>
-            </a>
-        </li>
+        badge = '<span class="latest-badge">Latest</span>' if is_latest else ""
+        repo_versions = _render_repo_versions(version) or '<span class="empty">—</span>'
+        reg_links = _render_reg_links(version) or '<span class="empty">—</span>'
+        if version in diff_links:
+            old_ver, diff_url = diff_links[version]
+            changes = f'<a href="{diff_url}">Changes from {old_ver}</a>'
+        else:
+            changes = '<span class="empty">—</span>'
+        page += f"""            <tr>
+                <td><span class="version-num">Caliptra {version}</span>{badge}</td>
+                <td><a href="./{version}/index.html">Documentation</a></td>
+                <td>{repo_versions}</td>
+                <td>{reg_links}</td>
+                <td>{changes}</td>
+            </tr>
 """
 
-    html += """    </ul>
-"""
-
-    repo_sections = [
-        _render_repo_versions(v) for v in sorted_versions
-    ]
-    repo_sections = [section for section in repo_sections if section]
-    if repo_sections:
-        html += """
-    <h2>Repository versions</h2>
-    <p>Source references used to build each version:</p>
-"""
-        html += "".join(repo_sections)
-
-    # Add diff section if any diffs exist
-    if diff_links:
-        html += """
-    <h2>Version Comparisons</h2>
-    <p>View what changed between versions:</p>
-    <ul class="diff-list">
-"""
-        for new_ver in sorted_versions:
-            if new_ver in diff_links:
-                old_ver, diff_url = diff_links[new_ver]
-                html += f"""        <li>
-            <a href="{diff_url}">
-                <span class="diff-icon">↔</span>
-                Changes from {old_ver} to {new_ver}
-            </a>
-        </li>
-"""
-        html += """    </ul>
-"""
-
-    html += """    <p style="margin-top: 40px; font-size: 0.85em; color: #999;">
+    page += """        </tbody>
+    </table>
+    </div>
+    <p style="margin-top: 40px; font-size: 0.85em; color: #999;">
         Generated by <a href="https://github.com/chipsalliance/caliptra-web">Caliptra</a> documentation builder
     </p>
 </body>
 </html>
 """
-    (output_dir / "index.html").write_text(html)
+    (output_dir / "index.html").write_text(page)
     logger.info(f"Generated version index at {output_dir / 'index.html'}")
 
     # Create 'latest' redirect to LATEST_VERSION
