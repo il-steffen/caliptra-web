@@ -35,10 +35,10 @@
       "versions": {
         "default": "main",
         "2.0": "css-v2.0.1",
-        "2.1": "css-v2.1.2"
+        "2.1": "8b4add30cebcb01a90eaff779cdcb401083a5c62"
       },
       "notes": {
-        "2.1": "Latest Subsystem 2.1 release tag; doc refresh tag css-v2.1.2+1.val.doc (same RTL, updated integration spec) under consideration."
+        "2.1": "css-v2.1.2 with minor/proposed test and doc fixes: branch patch_ss_v2.1 at 8b4add3 (includes tag css-v2.1.2+1.val.doc)."
       }
     },
     "caliptra-sw": {
@@ -78,10 +78,10 @@
       "versions": {
         "default": "v1p5",
         "2.0": "v1p4-patches",
-        "2.1": "v1p5"
+        "2.1": "db4a6f341145e05a5b7002a21d1cd5cc31147f35"
       },
       "notes": {
-        "2.1": "Upstream branch, unchanged; caliptra-ss css-v2.1.2 references commit db4a6f3."
+        "2.1": "Commit db4a6f3, based on submodule reference in caliptra-ss css-v2.1.2."
       }
     },
     "adams-bridge": {

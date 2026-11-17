@@ -24,6 +24,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -88,6 +89,17 @@ def run(cmd: list[str], cwd: Path | None = None, env: dict | None = None) -> Non
 
 
 def clone(url: str, ref: str, dest: Path) -> None:
+    if re.fullmatch(r"[0-9a-f]{40}", ref):
+        dest.mkdir(parents=True)
+        run(["git", "init", "-q"], cwd=dest)
+        run(["git", "remote", "add", "origin", url], cwd=dest)
+        run(["git", "fetch", "--depth", "1", "origin", ref], cwd=dest)
+        run(["git", "checkout", "-q", "FETCH_HEAD"], cwd=dest)
+        run(
+            ["git", "submodule", "update", "--init", "--recursive", "--depth", "1"],
+            cwd=dest,
+        )
+        return
     run(
         [
             "git",
