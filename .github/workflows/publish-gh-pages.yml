@@ -8,17 +8,11 @@ on:
     - cron: '0 6 * * *'  # nightly at 6:00 UTC
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-22.04
 
     permissions:
       contents: read
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Check out repository with LFS
@@ -82,7 +76,22 @@ jobs:
         with:
           path: dist/
 
+  # Separate deployment from upload to allow artifact discovery to catch up
+  # and let failed deployments be retried without uploading another artifact.
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        if: github.ref == 'refs/heads/main'
         uses: actions/deploy-pages@v4
